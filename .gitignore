@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# JAR extraction (compiled classes and dependencies)
+jar-extract/
+
+# Environment variables
+.env
+.env.local
+

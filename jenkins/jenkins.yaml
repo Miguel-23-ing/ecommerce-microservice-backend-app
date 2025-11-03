@@ -1,0 +1,48 @@
+jenkins:
+  systemMessage: "Ecommerce Microservices CI/CD Pipeline"
+  numExecutors: 4
+  scmCheckoutRetryCount: 3
+  mode: NORMAL
+  
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "admin123"
+  
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: "DOCKER_HOST"
+            value: "unix:///var/run/docker.sock"
+          - key: "KUBECONFIG"
+            value: "/var/jenkins_home/.kube/config"
+
+tool:
+  maven:
+    installations:
+      - name: "Maven-3.9"
+        properties:
+          - installSource:
+              installers:
+                - maven:
+                    id: "3.9.4"
+
+  jdk:
+    installations:
+      - name: "JDK-11"
+        properties:
+          - installSource:
+              installers:
+                - jdkInstaller:
+                    id: "11"
+
+unclassified:
+  location:
+    url: "http://localhost:8080"
+    adminAddress: "admin@ecommerce.com"

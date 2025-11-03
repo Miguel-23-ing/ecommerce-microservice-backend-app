@@ -1,4 +1,3 @@
-
 server:
   servlet:
     context-path: /
@@ -83,13 +82,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-
-
-
-
-
-
-
- 
- 

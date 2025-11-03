@@ -1,0 +1,50 @@
+﻿version: '3'
+services:
+  zipkin-container:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin-container
+    ports:
+      - "9411:9411"
+    networks:
+      - microservices_network
+    environment:
+      - STORAGE_TYPE=mem
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 30s
+      timeout: 5s
+      retries: 1
+      start_period: 1s
+
+  service-discovery-container:
+    image: selimhorri/service-discovery-ecommerce-boot:0.1.0
+    container_name: service-discovery-container
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices_network
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
+      - SPRING_SLEUTH_SAMPLER_PROBABILITY=1
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://cloud-config-container:9296/
+
+  cloud-config-container:
+    image: selimhorri/cloud-config-ecommerce-boot:0.1.0
+    container_name: cloud-config-container
+    ports:
+      - "9296:9296"
+    networks:
+      - microservices_network
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin-container:9411
+      - SPRING_SLEUTH_SAMPLER_PROBABILITY=1
+      - EUREKA_CLIENT_REGION=default
+      - EUREKA_CLIENT_AVAILABILITYZONES_DEFAULT=myzone
+      - EUREKA_CLIENT_SERVICEURL_MYZONE=http://service-discovery-container:8761/eureka
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery-container:8761/eureka/
+
+networks:
+  microservices_network:
+    driver: bridge

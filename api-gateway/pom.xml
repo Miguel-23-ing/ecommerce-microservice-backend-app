@@ -16,8 +16,7 @@
 	
 	<properties>
 		<java.version>11</java.version>
-		<spring-cloud.version>2020.0.4</spring-cloud.version>
-		<testcontainers.version>1.16.0</testcontainers.version>
+		<testcontainers.version>1.19.0</testcontainers.version>
 	</properties>
 	
 	<dependencies>
@@ -45,6 +44,10 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 	</dependencies>
 	
