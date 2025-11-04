@@ -53,13 +53,3 @@ public interface CategoryClientService {
 	ResponseEntity<Boolean> deleteById(@PathVariable("categoryId") final String categoryId);
 	
 }
-
-
-
-
-
-
-
-
-
-

@@ -17,13 +17,3 @@ public class AuthenticationResponse implements Serializable {
 	private String jwtToken;
 	
 }
-
-
-
-
-
-
-
-
-
-

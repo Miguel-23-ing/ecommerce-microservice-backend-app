@@ -37,12 +37,3 @@ public abstract class AppConstant {
 	
 	
 }
-
-
-
-
-
-
-
-
-

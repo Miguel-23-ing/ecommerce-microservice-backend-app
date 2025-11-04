@@ -25,13 +25,3 @@ public class AuthenticationRequest implements Serializable {
 	private String password;
 	
 }
-
-
-
-
-
-
-
-
-
-

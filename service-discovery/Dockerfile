@@ -1,37 +1,76 @@
-# Multi-stage build for service-discovery  
-FROM maven:3.9.6 AS build
-
-# Copy the entire project
-COPY . /workspace
-
-# Build only this module
-WORKDIR /workspace/service-discovery
-RUN mvn clean package -DskipTests
-
-# Runtime stage
-FROM openjdk:11-jre
-
-# Set working directory
+# ========== ETAPA DE COMPILACIÓN ==========
+# Utiliza Maven 3.8.4 con OpenJDK 11 en versión slim para compilar el código fuente
+# Esta etapa compila el proyecto Maven y genera el JAR ejecutable
+FROM maven:3.8.4-openjdk-11-slim AS build
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup --system spring && adduser --system spring --ingroup spring
+# Copia el archivo pom.xml y descarga todas las dependencias previamente
+# Esto permite un mejor aprovechamiento del caché de Docker
+COPY pom.xml ./
 
-# Copy the built jar from build stage
-COPY --from=build /workspace/service-discovery/target/service-discovery-v0.1.0.jar app.jar
+RUN mvn dependency:go-offline -B
 
-# Change ownership to spring user
-RUN chown spring:spring app.jar
+# Copia el código fuente y compila el proyecto, omitiendo tests para acelerar el build
+COPY src ./src
 
-# Switch to non-root user
-USER spring:spring
+RUN mvn clean package -DskipTests
 
-# Expose port
-EXPOSE 8761
+# ========== ETAPA DE RUNTIME ==========
+# Utiliza OpenJDK 11 JRE (sin compilador) para reducir el tamaño de la imagen
+FROM openjdk:11-jre-slim
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8761/actuator/health || exit 1
+# Instala curl para el health check HTTP
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# ========== ARGUMENTOS DE CONSTRUCCIÓN ==========
+# Versión del proyecto
+ARG PROJECT_VERSION=0.1.0
+# Ambiente (dev, staging, prod)
+ARG ENVIRONMENT=dev
+# ID del usuario no-root para ejecutar la aplicación
+ARG USER_ID=1001
+# ID del grupo para el usuario no-root
+ARG GROUP_ID=1001
+
+# ========== VARIABLES DE ENTORNO ==========
+# Perfil de Spring Boot activo (define configuración específica del ambiente)
+ENV SPRING_PROFILES_ACTIVE=${ENVIRONMENT}
+# Opciones JVM: memoria máxima 512MB, inicial 256MB, G1GC para mejor rendimiento en contenedores
+ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:+UseContainerSupport"
+# Puerto donde escucha el servidor Eureka (Service Discovery)
+ENV SERVER_PORT=8761
+
+# ========== SEGURIDAD: USUARIO NO-ROOT ==========
+# Crea un grupo y usuario no-root para ejecutar la aplicación (mejora de seguridad)
+RUN groupadd -g ${GROUP_ID} appuser && \
+    useradd -r -u ${USER_ID} -g appuser appuser
+
+# Crea directorio home y asigna permisos al usuario
+RUN mkdir -p /home/app && \
+    chown -R appuser:appuser /home/app
+
+# ========== CONFIGURACIÓN DEL DIRECTORIO DE TRABAJO ==========
+WORKDIR /home/app
+# Cambia al usuario no-root para ejecutar la aplicación
+USER appuser
+
+# ========== COPIA DEL JAR COMPILADO ==========
+# Copia el JAR generado desde la etapa de compilación (desde el contenedor anterior)
+# --chown asegura que el archivo pertenece al usuario appuser
+COPY --from=build --chown=appuser:appuser /app/target/service-discovery-v${PROJECT_VERSION}.jar app.jar
+
+# ========== EXPOSICIÓN DE PUERTOS ==========
+# Expone el puerto 8761 donde escucha el servidor Eureka
+EXPOSE ${SERVER_PORT}
+
+# ========== HEALTH CHECK ==========
+# Verifica cada 30s si el servicio está saludable
+# Timeout de 10s, espera 60s antes de comenzar checks
+# Falla después de 3 intentos fallidos
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:${SERVER_PORT}/actuator/health || exit 1
+
+# ========== PUNTO DE ENTRADA ==========
+# Ejecuta la aplicación Java con los parámetros configurados
+# Hereda JAVA_OPTS, perfiles de Spring y puerto desde variables de entorno
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE -Dserver.port=$SERVER_PORT -Dmanagement.server.port=$SERVER_PORT -jar app.jar"]

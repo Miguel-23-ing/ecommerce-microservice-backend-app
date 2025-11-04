@@ -1,37 +1,70 @@
-# Multi-stage build for cloud-config
-FROM maven:3.9.6 AS build
-
-# Copy the entire project
-COPY . /workspace
-
-# Build only this module
-WORKDIR /workspace/cloud-config
-RUN mvn clean package -DskipTests
-
-# Runtime stage
-FROM openjdk:11-jre
-
-# Set working directory
+# Etapa 1: Construcción (Build stage)
+# Usar imagen Maven 3.8.4 con OpenJDK 11 para compilar la aplicación
+FROM maven:3.8.4-openjdk-11-slim AS build
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup --system spring && adduser --system spring --ingroup spring
+# Copiar archivo de configuración de dependencias
+COPY pom.xml ./
 
-# Copy the built jar from build stage
-COPY --from=build /workspace/cloud-config/target/cloud-config-v0.1.0.jar app.jar
+# Descargar todas las dependencias necesarias con anticipación (optimiza capas de Docker)
+RUN mvn dependency:go-offline -B
 
-# Change ownership to spring user
-RUN chown spring:spring app.jar
+# Copiar código fuente y compilar la aplicación (genera .jar en /app/target)
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Switch to non-root user
-USER spring:spring
 
-# Expose port
-EXPOSE 9296
+# Etapa 2: Ejecución (Runtime stage)
+# Usar imagen OpenJDK 11 JRE 
+FROM openjdk:11-jre-slim
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:9296/actuator/health || exit 1
+# Instalar curl para el health check (verifica que el servidor esté listo)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Argumentos de construcción (personalizables durante docker build)
+# PROJECT_VERSION: versión del artefacto JAR a copiar
+# ENVIRONMENT: perfil Spring activo (dev, prod, test, etc.)
+# USER_ID y GROUP_ID: UIDs para el usuario no-root que ejecutará la aplicación
+ARG PROJECT_VERSION=0.1.0
+ARG ENVIRONMENT=dev
+ARG USER_ID=1001
+ARG GROUP_ID=1001
+
+# Variables de entorno configurables durante docker run
+# SPRING_PROFILES_ACTIVE: activa el perfil correspondiente en Spring Boot
+# JAVA_OPTS: parámetros JVM (heap máximo/mínimo, garbage collector, soporte contenedor)
+# SERVER_PORT: puerto en el que escucha la aplicación (Cloud Config por defecto en 9296)
+ENV SPRING_PROFILES_ACTIVE=${ENVIRONMENT}
+ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:+UseContainerSupport"
+ENV SERVER_PORT=9296
+
+
+# Crear grupo de usuario y usuario no-root (mejora seguridad: la app no corre como root)
+RUN groupadd -g ${GROUP_ID} appuser && \
+    useradd -r -u ${USER_ID} -g appuser appuser
+
+# Crear directorio de inicio y asignar permisos al usuario no-root
+RUN mkdir -p /home/app && \
+    chown -R appuser:appuser /home/app
+
+# Definir directorio de trabajo y cambiar al usuario no-root
+WORKDIR /home/app
+USER appuser
+
+
+# Copiar archivo JAR compilado desde la etapa build (reduce tamaño final eliminando dependencias de compilación)
+# --chown: asegura que el archivo pertenezca al usuario appuser (no root)
+COPY --from=build --chown=appuser:appuser /app/target/cloud-config-v${PROJECT_VERSION}.jar cloud-config.jar
+
+# Exponer puerto en el contenedor
+EXPOSE ${SERVER_PORT}
+
+# Health check: verifica cada 30s si la aplicación responde en /actuator/health
+# Si falla 3 veces consecutivas, marca el contenedor como unhealthy
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:${SERVER_PORT}/actuator/health || exit 1
+
+# Comando de inicio: ejecuta Spring Cloud Config Server con parámetros de JVM y configuración de Spring
+# Sirve propiedades de configuración a todos los microservicios registrados
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE -Dserver.port=$SERVER_PORT -Dmanagement.server.port=$SERVER_PORT -jar cloud-config.jar"]

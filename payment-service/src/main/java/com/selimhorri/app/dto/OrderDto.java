@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.selimhorri.app.constant.AppConstant;
+import com.selimhorri.app.domain.enums.OrderStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,15 +36,6 @@ public class OrderDto implements Serializable {
 	private LocalDateTime orderDate;
 	private String orderDesc;
 	private Double orderFee;
+	private String orderStatus;
 	
 }
-
-
-
-
-
-
-
-
-
-
