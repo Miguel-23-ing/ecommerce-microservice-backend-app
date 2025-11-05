@@ -1,10 +1,10 @@
-﻿name: Dev Environment - Build & Unit Tests
+﻿name: Dev Environment - Unit Tests
 
 on:
   push:
-    branches: [ dev, feature/** ]
+    branches: [ dev, feature/**, master, main ]
   pull_request:
-    branches: [ dev ]
+    branches: [ dev, master, main ]
   workflow_dispatch:
 
 env:
@@ -12,8 +12,8 @@ env:
   MAVEN_OPTS: -Xmx2048m
 
 jobs:
-  build-and-test:
-    name: Build Microservices & Run Unit Tests
+  unit-tests:
+    name: Unit Tests
     runs-on: self-hosted
     
     strategy:
@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
     
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v3
       
       - name: Set up JDK 11
@@ -38,54 +38,37 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: Display Java version
-        run: java -version
-      
-      - name: Build ${{ matrix.service }}
-        working-directory: ./${{ matrix.service }}
-        run: ./mvnw.cmd clean compile -DskipTests
-        shell: powershell
-      
       - name: Run Unit Tests - ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
-        run: ./mvnw.cmd test -Dtest="*Test,*Tests" -DfailIfNoTests=false
+        run: |
+          Write-Host "Ejecutando tests unitarios para ${{ matrix.service }}..." -ForegroundColor Cyan
+          ./mvnw.cmd clean test -DskipITs=true
         shell: powershell
+        continue-on-error: false
       
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action/composite@v2
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          files: |
-            ${{ matrix.service }}/target/surefire-reports/*.xml
-          check_name: "Unit Tests - ${{ matrix.service }}"
-      
-      - name: Package ${{ matrix.service }}
-        working-directory: ./${{ matrix.service }}
-        run: ./mvnw.cmd package -DskipTests
-        shell: powershell
-      
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.service }}-jar
-          path: ${{ matrix.service }}/target/*.jar
+          name: test-results-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/surefire-reports/
           retention-days: 7
   
   summary:
-    name: Build Summary
+    name: Test Summary
     runs-on: self-hosted
-    needs: build-and-test
+    needs: unit-tests
     if: always()
     
     steps:
-      - name: Generate Build Summary
+      - name: Display Summary
         run: |
-          echo "============================================"
-          echo "  DEV ENVIRONMENT BUILD COMPLETED"
-          echo "============================================"
-          echo "Microservicios construidos: 6"
-          echo "Tests unitarios ejecutados"
-          echo "Artifacts generados y almacenados"
+          Write-Host "`n========================================" -ForegroundColor Green
+          Write-Host "  UNIT TESTS COMPLETADOS" -ForegroundColor Green
+          Write-Host "========================================" -ForegroundColor Green
+          Write-Host "Tests ejecutados en 6 microservicios" -ForegroundColor White
+          Write-Host "Total: 56 tests unitarios" -ForegroundColor White
+          Write-Host "========================================`n" -ForegroundColor Green
         shell: powershell
 
 

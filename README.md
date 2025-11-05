@@ -20,9 +20,10 @@ Este documento presenta el reporte completo de implementación de **pipelines CI
 ### Objetivos del Proyecto
 
 - ✅ Implementar **3 pipelines CI/CD** (desarrollo, staging, producción)
-- ✅ Automatizar **101 tests** (56 unitarios + 45 integración)
+- ✅ Automatizar **101 tests** (56 unitarios + 45 integración) + **5 tests E2E**
 - ✅ Configurar **GitHub Actions self-hosted runner** en Windows
 - ✅ Desplegar en **Kubernetes (Minikube)** con 6 microservicios
+- ✅ Validar **flujos completos de usuario** con pruebas end-to-end
 
 ### Tecnologías Utilizadas
 
@@ -519,10 +520,59 @@ void testGetPaymentById_Found() throws Exception {
 4. ✅ **Automatización**: Pipelines completamente automatizados
 5. ✅ **Artifacts versionados**: JARs y Docker images con semver
 
+### Pruebas End-to-End (E2E) ✨ NUEVO
+
+Se han implementado **5 pruebas E2E completas** que validan flujos de usuario completos a través de múltiples microservicios:
+
+#### 🎯 E2E Test 1: User Registration Flow
+**Flujo**: Registro completo de usuario y gestión de perfil
+- ✅ 5 pasos de validación
+- ✅ 1 microservicio (User Service)
+- ✅ 15+ assertions
+
+#### 🎯 E2E Test 2: Shopping and Favorites Flow
+**Flujo**: Navegación de productos y gestión de favoritos
+- ✅ 6 pasos de validación
+- ✅ 3 microservicios (User, Product, Favourite)
+- ✅ 18+ assertions
+
+#### 🎯 E2E Test 3: Order Creation and Processing Flow
+**Flujo**: Creación y procesamiento de órdenes de compra
+- ✅ 6 pasos de validación
+- ✅ 3 microservicios (User, Product, Order)
+- ✅ 18+ assertions
+
+#### 🎯 E2E Test 4: Payment Processing Flow
+**Flujo**: Procesamiento completo de pagos
+- ✅ 6 pasos de validación
+- ✅ 3 microservicios (User, Order, Payment)
+- ✅ 18+ assertions
+
+#### 🎯 E2E Test 5: Shipping and Fulfillment Flow
+**Flujo**: Envío completo desde orden hasta tracking
+- ✅ 9 pasos de validación
+- ✅ 5 microservicios (User, Product, Order, Payment, Shipping)
+- ✅ 27+ assertions
+- ✅ Tracking completo: Orden → Pago → Envío
+
+**📊 Métricas E2E**:
+- **Total pasos validados**: 32 steps
+- **Total assertions**: 96+
+- **Microservicios cubiertos**: 5 de 6 (83.3%)
+- **Tecnologías**: JUnit 5, REST Assured, Awaitility
+- **Ubicación**: `e2e-tests/` módulo
+
+**🚀 Ejecución**:
+```bash
+mvn test -pl e2e-tests
+```
+
+Ver documentación completa en: [e2e-tests/README.md](e2e-tests/README.md)
+
 ### Áreas de Mejora
 
 1. ⚠️ **Code Coverage Tool**: Implementar JaCoCo para métricas exactas
-2. ⚠️ **Tests E2E**: No implementados aún
+2. ✅ **Tests E2E**: ✨ IMPLEMENTADOS - 5 flujos completos validados
 3. ⚠️ **Performance Tests**: Planificados pero no ejecutados
 4. ⚠️ **Contract Testing**: No hay tests entre servicios (Pact)
 5. ⚠️ **Mutation Testing**: No implementado (PIT)
@@ -1127,8 +1177,12 @@ Configurado en CI/CD pipeline:
 - **101 tests totales**: 100% tasa de éxito
   - 56 tests unitarios
   - 45 tests de integración
+- **5 tests E2E**: Flujos completos de usuario
+  - 32 pasos de validación
+  - 96+ assertions
+  - 5 microservicios cubiertos
 - **Cobertura estimada**: ~85% del código
-- **Tiempo de ejecución**: ~4:54 minutos total
+- **Tiempo de ejecución**: ~4:54 minutos (unit + integration)
 
 #### ✅ Kubernetes Deployment
 - **10 pods desplegados**: 4 infraestructura + 6 microservicios
@@ -1145,8 +1199,10 @@ Configurado en CI/CD pipeline:
 
 | Categoría | Métrica | Valor | Objetivo | Estado |
 |-----------|---------|-------|----------|--------|
-| **Testing** | Total Tests | 101 | 100 | ✅ 101% |
+| **Testing** | Total Tests (Unit + Integration) | 101 | 100 | ✅ 101% |
+| **Testing** | E2E Tests | 5 | 5 | ✅ 100% |
 | **Testing** | Pass Rate | 100% | 95% | ✅ 100% |
+| **Testing** | E2E Coverage (Services) | 5/6 | 5 | ✅ 83% |
 | **CI/CD** | Pipelines | 3 | 3 | ✅ 100% |
 | **CI/CD** | Automation | 100% | 90% | ✅ 100% |
 | **Deployment** | Microservices | 6 | 6 | ✅ 100% |

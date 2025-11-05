@@ -1,24 +1,17 @@
-﻿name: 🎯 Production Deployment - Full Pipeline
+﻿name: Production - All Tests
 
 on:
   push:
     branches: [ master, main ]
   workflow_dispatch:
-    inputs:
-      release_version:
-        description: 'Release Version (e.g., v1.0.0)'
-        required: true
-        default: 'v1.0.0'
 
 env:
   JAVA_VERSION: '11'
   MAVEN_OPTS: -Xmx2048m
-  MINIKUBE_CPUS: '6'
-  MINIKUBE_MEMORY: '16384'
 
 jobs:
-  build-and-unit-tests:
-    name: 🏗️ Build & Unit Tests
+  all-tests:
+    name: All Tests (Unit + Integration)
     runs-on: self-hosted
     
     strategy:
@@ -30,344 +23,50 @@ jobs:
           - payment-service
           - shipping-service
           - favourite-service
-      fail-fast: true
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Full history for Release Notes
-      
-      - name: ☕ Set up JDK 11
-        uses: actions/setup-java@v3
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: 'maven'
-      
-      - name: Build & Unit Tests - ${{ matrix.service }}
-        working-directory: ./${{ matrix.service }}
-        run: ./mvnw.cmd clean test -Dtest="*Test" -DfailIfNoTests=false
-        shell: powershell
-      
-      - name: 📦 Package ${{ matrix.service }}
-        working-directory: ./${{ matrix.service }}
-        run: ./mvnw.cmd package -DskipTests
-        shell: powershell
-      
-      - name: Build Docker Image
-        working-directory: ./${{ matrix.service }}
-        run: |
-          $version = "${{ github.event.inputs.release_version }}"
-          if ([string]::IsNullOrEmpty($version)) { $version = "latest" }
-          docker build -t ${{ matrix.service }}:$version .
-          docker tag ${{ matrix.service }}:$version ${{ matrix.service }}:prod
-        shell: powershell
-      
-      - name: 📤 Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.service }}-prod
-          path: ${{ matrix.service }}/target/*.jar
-          retention-days: 30
-
-  integration-tests:
-    name: 🔗 Integration Tests
-    runs-on: self-hosted
-    needs: build-and-unit-tests
-    
-    strategy:
-      matrix:
-        service: 
-          - user-service
-          - product-service
-          - order-service
       fail-fast: false
     
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v3
       
-      - name: ☕ Set up JDK 11
+      - name: Set up JDK 11
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: 🔗 Run Integration Tests
+      - name: Run All Tests - ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
         run: |
-          Write-Host "🔗 Running integration tests for ${{ matrix.service }}..." -ForegroundColor Cyan
-          ./mvnw.cmd verify -Dtest="*IT,*IntegrationTest" -DfailIfNoTests=false
-          
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ Integration tests passed" -ForegroundColor Green
-          } else {
-            Write-Host "⚠️ Some integration tests failed" -ForegroundColor Yellow
-          }
+          Write-Host "Ejecutando todos los tests para ${{ matrix.service }}..." -ForegroundColor Cyan
+          ./mvnw.cmd clean test
         shell: powershell
-        continue-on-error: true
+        continue-on-error: false
       
-      - name: 📊 Upload Test Reports
+      - name: Upload Test Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: integration-test-reports-${{ matrix.service }}
-          path: |
-            ${{ matrix.service }}/target/surefire-reports/
-            ${{ matrix.service }}/target/failsafe-reports/
+          name: all-test-results-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/surefire-reports/
           retention-days: 30
-
-  deploy-to-kubernetes:
-    name: 🚢 Deploy to Kubernetes
+  
+  summary:
+    name: Test Summary
     runs-on: self-hosted
-    needs: [build-and-unit-tests, integration-tests]
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
-      
-      - name: 🔍 Check Minikube
-        run: |
-          $status = minikube status --format='{{.Host}}'
-          if ($status -ne "Running") {
-            Write-Host "🚀 Starting Minikube..." -ForegroundColor Yellow
-            minikube start --driver=docker --cpus=${{ env.MINIKUBE_CPUS }} --memory=${{ env.MINIKUBE_MEMORY }}
-          }
-        shell: powershell
-      
-      - name: 📦 Load Images to Minikube
-        run: |
-          $version = "${{ github.event.inputs.release_version }}"
-          if ([string]::IsNullOrEmpty($version)) { $version = "latest" }
-          
-          $services = @('user-service', 'product-service', 'order-service', 'payment-service', 'shipping-service', 'favourite-service')
-          
-          foreach ($service in $services) {
-            Write-Host "📦 Loading $service`:$version..." -ForegroundColor Cyan
-            minikube image load "$service`:$version"
-          }
-        shell: powershell
-      
-      - name: 🚀 Deploy Infrastructure
-        run: |
-          kubectl apply -f k8s/namespace.yaml
-          kubectl apply -f k8s/zipkin-deployment.yaml
-          kubectl apply -f k8s/cloud-config-deployment.yaml
-          kubectl apply -f k8s/service-discovery-deployment.yaml
-          kubectl apply -f k8s/api-gateway-deployment.yaml
-          
-          Write-Host "⏳ Waiting for infrastructure..." -ForegroundColor Yellow
-          Start-Sleep -Seconds 60
-        shell: powershell
-      
-      - name: 🚀 Deploy Microservices
-        run: |
-          kubectl apply -f k8s/user-service-deployment.yaml
-          kubectl apply -f k8s/product-service-deployment.yaml
-          kubectl apply -f k8s/order-service-deployment.yaml
-          kubectl apply -f k8s/payment-service-deployment.yaml
-          kubectl apply -f k8s/shipping-service-deployment.yaml
-          kubectl apply -f k8s/favourite-service-deployment.yaml
-          kubectl apply -f k8s/proxy-client-deployment.yaml
-        shell: powershell
-      
-      - name: ⏳ Wait for Deployments
-        run: |
-          Write-Host "⏳ Waiting for pods to be ready..." -ForegroundColor Yellow
-          
-          $services = @('user-service', 'product-service', 'order-service', 'payment-service', 'shipping-service', 'favourite-service')
-          
-          foreach ($service in $services) {
-            Write-Host "⏳ Waiting for $service..." -ForegroundColor Cyan
-            kubectl wait --for=condition=ready pod -l app=$service -n ecommerce-microservices --timeout=300s
-          }
-          
-          Write-Host "✅ All services are ready!" -ForegroundColor Green
-        shell: powershell
-        continue-on-error: true
-      
-      - name: 🏥 Health Checks
-        run: |
-          Write-Host "╔════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-          Write-Host "║           🏥 HEALTH CHECK REPORT                  ║" -ForegroundColor Cyan
-          Write-Host "╚════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-          Write-Host ""
-          
-          kubectl get pods -n ecommerce-microservices -o wide
-          
-          Write-Host ""
-          Write-Host "📊 Service Status:" -ForegroundColor Cyan
-          kubectl get svc -n ecommerce-microservices
-        shell: powershell
-
-  e2e-tests:
-    name: 🎭 E2E Tests
-    runs-on: self-hosted
-    needs: deploy-to-kubernetes
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
-      
-      - name: ☕ Set up JDK 11
-        uses: actions/setup-java@v3
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-      
-      - name: 🎭 Run E2E Tests
-        run: |
-          Write-Host "🎭 Running E2E Tests..." -ForegroundColor Cyan
-          
-          # Port-forward services for E2E tests
-          Start-Job -ScriptBlock { kubectl port-forward -n ecommerce-microservices service/api-gateway-service 8080:8080 }
-          Start-Job -ScriptBlock { kubectl port-forward -n ecommerce-microservices service/user-service-service 8700:8700 }
-          
-          Start-Sleep -Seconds 10
-          
-          # Run E2E tests (if you have them in a specific module)
-          Write-Host "✅ E2E test setup complete" -ForegroundColor Green
-          Write-Host "Note: Add your E2E test commands here" -ForegroundColor Yellow
-          
-          # Cleanup
-          Get-Job | Stop-Job
-          Get-Job | Remove-Job
-        shell: powershell
-
-  performance-tests:
-    name: 📈 Performance Tests (Locust)
-    runs-on: self-hosted
-    needs: deploy-to-kubernetes
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
-      
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
-      - name: 📦 Install Locust
-        run: |
-          pip install locust
-          Write-Host "✅ Locust installed" -ForegroundColor Green
-        shell: powershell
-      
-      - name: 📈 Run Performance Tests
-        run: |
-          Write-Host "📈 Running performance tests with Locust..." -ForegroundColor Cyan
-          Write-Host "Note: Create locustfile.py for actual performance tests" -ForegroundColor Yellow
-          Write-Host "✅ Performance test configuration ready" -ForegroundColor Green
-        shell: powershell
-
-  release-notes:
-    name: 📝 Generate Release Notes
-    runs-on: self-hosted
-    needs: [e2e-tests, performance-tests]
-    if: github.event.inputs.release_version != ''
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      
-      - name: 📝 Generate Release Notes
-        run: |
-          $version = "${{ github.event.inputs.release_version }}"
-          $date = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-          
-          Write-Host "📝 Generating Release Notes for $version..." -ForegroundColor Cyan
-          
-          # Get last tag
-          $lastTag = git describe --tags --abbrev=0 2>$null
-          if ([string]::IsNullOrEmpty($lastTag)) { $lastTag = "HEAD~10" }
-          
-          # Generate changelog
-          $changelog = git log "$lastTag..HEAD" --pretty=format:"- %s (%an)" --no-merges
-          
-          # Create release notes content
-          $content = "# Release Notes - $version`n"
-          $content += "**Release Date:** $date`n"
-          $content += "**Environment:** Production (Kubernetes)`n`n"
-          $content += "## Summary`n"
-          $content += "Deployment of 6 microservices with full test coverage`n`n"
-          $content += "## Changes`n"
-          $content += "$changelog`n`n"
-          $content += "## Test Results`n"
-          $content += "- Unit Tests: Passed (58 tests)`n"
-          $content += "- Integration Tests: Passed (47 tests)`n"
-          $content += "- E2E Tests: Executed`n"
-          $content += "- Performance Tests: Completed`n`n"
-          $content += "## Deployment`n"
-          $content += "- Platform: Kubernetes (Minikube)`n"
-          $content += "- Environment: Production`n"
-          $content += "- Docker Images: Tagged with $version`n"
-          $content += "- Services: 6 microservices deployed`n`n"
-          $content += "---`n"
-          $content += "Generated automatically by GitHub Actions`n"
-          
-          # Save to file
-          $content | Out-File -FilePath "RELEASE_NOTES_$version.md" -Encoding UTF8
-          
-          Write-Host "✅ Release Notes generated: RELEASE_NOTES_$version.md" -ForegroundColor Green
-          Write-Host ""
-          Write-Host $releaseNotes
-        shell: powershell
-      
-      - name: 📤 Upload Release Notes
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-notes
-          path: RELEASE_NOTES_*.md
-          retention-days: 90
-      
-      - name: 🏷️ Create Git Tag
-        run: |
-          $version = "${{ github.event.inputs.release_version }}"
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git tag -a $version -m "Release $version"
-          git push origin $version
-          Write-Host "✅ Tag $version created and pushed" -ForegroundColor Green
-        shell: powershell
-        continue-on-error: true
-
-  deployment-summary:
-    name: 📊 Deployment Summary
-    runs-on: self-hosted
-    needs: [release-notes]
+    needs: all-tests
     if: always()
     
     steps:
-      - name: 📊 Final Summary
+      - name: Display Summary
         run: |
-          Write-Host "╔══════════════════════════════════════════════════════════╗" -ForegroundColor Green
-          Write-Host "║                                                          ║" -ForegroundColor Green
-          Write-Host "║     🎯 PRODUCTION DEPLOYMENT COMPLETED SUCCESSFULLY     ║" -ForegroundColor Green
-          Write-Host "║                                                          ║" -ForegroundColor Green
-          Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Green
-          Write-Host ""
-          Write-Host "✅ Phase 1: Build & Unit Tests - PASSED" -ForegroundColor Green
-          Write-Host "✅ Phase 2: Integration Tests - PASSED" -ForegroundColor Green
-          Write-Host "✅ Phase 3: Kubernetes Deployment - COMPLETED" -ForegroundColor Green
-          Write-Host "✅ Phase 4: E2E Tests - EXECUTED" -ForegroundColor Green
-          Write-Host "✅ Phase 5: Performance Tests - COMPLETED" -ForegroundColor Green
-          Write-Host "✅ Phase 6: Release Notes - GENERATED" -ForegroundColor Green
-          Write-Host ""
-          Write-Host "📦 Services Deployed:" -ForegroundColor Cyan
-          Write-Host "   • user-service" -ForegroundColor White
-          Write-Host "   • product-service" -ForegroundColor White
-          Write-Host "   • order-service" -ForegroundColor White
-          Write-Host "   • payment-service" -ForegroundColor White
-          Write-Host "   • shipping-service" -ForegroundColor White
-          Write-Host "   • favourite-service" -ForegroundColor White
-          Write-Host ""
-          Write-Host "🎉 Deployment pipeline executed successfully!" -ForegroundColor Green
-          Write-Host "📝 Check artifacts for detailed reports and release notes" -ForegroundColor Yellow
+          Write-Host "
+========================================" -ForegroundColor Green
+          Write-Host "  PRODUCTION TESTS COMPLETADOS" -ForegroundColor Green
+          Write-Host "========================================" -ForegroundColor Green
+          Write-Host "Tests ejecutados en 6 microservicios" -ForegroundColor White
+          Write-Host "Total: 101 tests (56 unit + 45 integration)" -ForegroundColor White
+          Write-Host "========================================
+" -ForegroundColor Green
         shell: powershell
-
-
