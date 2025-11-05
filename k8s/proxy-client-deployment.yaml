@@ -1,37 +1,33 @@
-﻿apiVersion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: product-service
+  name: proxy-client
   namespace: ecommerce-microservices
   labels:
-    app: product-service
+    app: proxy-client
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: product-service
+      app: proxy-client
   template:
     metadata:
       labels:
-        app: product-service
+        app: proxy-client
     spec:
       containers:
-      - name: product-service
-        image: ecommerce-product-service:dev
+      - name: proxy-client
+        image: ecommerce-proxy-client:dev
         imagePullPolicy: Never
         ports:
-        - containerPort: 8200
+        - containerPort: 8900
         env:
         - name: SPRING_PROFILES_ACTIVE
-          value: "default"
-        - name: SPRING_DATASOURCE_URL
-          value: "jdbc:h2:mem:productdb"
-        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
-          value: "org.h2.Driver"
-        - name: SPRING_JPA_DATABASE_PLATFORM
-          value: "org.hibernate.dialect.H2Dialect"
+          value: "dev"
         - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
           value: "http://service-discovery-service:8761/eureka/"
+        - name: EUREKA_INSTANCE_HOSTNAME
+          value: "proxy-client"
         - name: SPRING_ZIPKIN_BASEURL
           value: "http://zipkin-service:9411"
         - name: SPRING_CONFIG_IMPORT
@@ -39,43 +35,43 @@ spec:
         resources:
           requests:
             memory: "1Gi"
-            cpu: "300m"
+            cpu: "500m"
           limits:
             memory: "2Gi"
-            cpu: "700m"
+            cpu: "1000m"
         startupProbe:
           httpGet:
-            path: /product-service/actuator/health
-            port: 8200
+            path: /app/actuator/health
+            port: 8900
           initialDelaySeconds: 60
           periodSeconds: 10
           failureThreshold: 30
         livenessProbe:
           httpGet:
-            path: /product-service/actuator/health
-            port: 8200
+            path: /app/actuator/health
+            port: 8900
           periodSeconds: 30
           failureThreshold: 3
         readinessProbe:
           httpGet:
-            path: /product-service/actuator/health
-            port: 8200
+            path: /app/actuator/health
+            port: 8900
           periodSeconds: 10
           failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: product-service-service
+  name: proxy-client-service
   namespace: ecommerce-microservices
   labels:
-    app: product-service
+    app: proxy-client
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
-  - port: 8200
-    targetPort: 8200
+  - port: 8900
+    targetPort: 8900
     protocol: TCP
     name: http
   selector:
-    app: product-service
+    app: proxy-client

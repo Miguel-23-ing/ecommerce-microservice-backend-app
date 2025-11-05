@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: cloud-config
-        image: docker.io/selimhorri/cloud-config:0.1.0
-        imagePullPolicy: IfNotPresent
+        image: ecommerce-cloud-config:dev
+        imagePullPolicy: Never
         ports:
         - containerPort: 9296
         env:

@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: api-gateway
-        image: docker.io/selimhorri/api-gateway-ecommerce-boot:0.1.0
-        imagePullPolicy: IfNotPresent
+        image: ecommerce-api-gateway:dev
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080
         env:

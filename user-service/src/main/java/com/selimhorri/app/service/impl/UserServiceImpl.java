@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.selimhorri.app.domain.Credential;
+import com.selimhorri.app.domain.RoleBasedAuthority;
 import com.selimhorri.app.domain.User;
 import com.selimhorri.app.dto.UserDto;
 import com.selimhorri.app.exception.wrapper.UserObjectNotFoundException;
@@ -114,38 +115,46 @@ public class UserServiceImpl implements UserService {
 		User savedUser = this.userRepository.save(UserMappingHelper.mapOnlyUser(userDto));
 		log.info("Usuario creado exitosamente con ID: {}", savedUser.getUserId());
 		
-		// 2. Si el DTO incluye credenciales, crearlas y asociarlas al usuario
-		if (userDto.getCredentialDto() != null) {
-			log.info("Creando credenciales para el usuario: {}", savedUser.getUserId());
-			
-			// Validar que el username no existe
-			String username = userDto.getCredentialDto().getUsername();
-			if (credentialRepository.existsByUsername(username)) {
-				log.error("El nombre de usuario ya existe: {}", username);
-				throw new IllegalArgumentException("El nombre de usuario ya existe: " + username);
-			}
-			
-			// Crear las credenciales
-			Credential credential = new Credential();
-			credential.setUsername(username);
-			// Encriptar la contraseña con BCrypt
-			credential.setPassword(passwordEncoder.encode(userDto.getCredentialDto().getPassword()));
-			credential.setRoleBasedAuthority(userDto.getCredentialDto().getRoleBasedAuthority());
-			credential.setIsEnabled(userDto.getCredentialDto().getIsEnabled() != null ? 
-					userDto.getCredentialDto().getIsEnabled() : true);
-			credential.setIsAccountNonExpired(userDto.getCredentialDto().getIsAccountNonExpired() != null ? 
-					userDto.getCredentialDto().getIsAccountNonExpired() : true);
-			credential.setIsAccountNonLocked(userDto.getCredentialDto().getIsAccountNonLocked() != null ? 
-					userDto.getCredentialDto().getIsAccountNonLocked() : true);
-			credential.setIsCredentialsNonExpired(userDto.getCredentialDto().getIsCredentialsNonExpired() != null ? 
-					userDto.getCredentialDto().getIsCredentialsNonExpired() : true);
-			credential.setUser(savedUser);
-			
-			// Guardar las credenciales
-			Credential savedCredential = credentialRepository.save(credential);
-			savedUser.setCredential(savedCredential);
-			log.info("Credenciales creadas exitosamente para usuario: {}", savedUser.getUserId());
+		// 2. Crear credenciales automáticamente si no existen en el DTO
+		String username;
+		String password;
+		RoleBasedAuthority role;
+		
+		if (userDto.getCredentialDto() != null && userDto.getCredentialDto().getUsername() != null) {
+			// Usar credenciales del DTO
+			log.info("Creando credenciales desde DTO para el usuario: {}", savedUser.getUserId());
+			username = userDto.getCredentialDto().getUsername();
+			password = userDto.getCredentialDto().getPassword();
+			role = userDto.getCredentialDto().getRoleBasedAuthority();
+		} else {
+			// Auto-generar credenciales
+			log.info("Auto-generando credenciales para el usuario: {}", savedUser.getUserId());
+			username = savedUser.getFirstName().toLowerCase() + "." + savedUser.getLastName().toLowerCase();
+			password = "password123";  // Password por defecto
+			role = RoleBasedAuthority.ROLE_USER;
 		}
+		
+		// Validar que el username no existe
+		if (credentialRepository.existsByUsername(username)) {
+			log.error("El nombre de usuario ya existe: {}", username);
+			throw new IllegalArgumentException("El nombre de usuario ya existe: " + username);
+		}
+		
+		// Crear las credenciales
+		Credential credential = new Credential();
+		credential.setUsername(username);
+		credential.setPassword(passwordEncoder.encode(password));  // Encriptar con BCrypt
+		credential.setRoleBasedAuthority(role);
+		credential.setIsEnabled(true);
+		credential.setIsAccountNonExpired(true);
+		credential.setIsAccountNonLocked(true);
+		credential.setIsCredentialsNonExpired(true);
+		credential.setUser(savedUser);
+		
+		// Guardar las credenciales
+		Credential savedCredential = credentialRepository.save(credential);
+		savedUser.setCredential(savedCredential);
+		log.info("✅ Credenciales creadas exitosamente: username={}, userId={}", username, savedUser.getUserId());
 		
 		return UserMappingHelper.map(savedUser);
 	}
