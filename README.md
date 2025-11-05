@@ -1,29 +1,192 @@
-# E-Commerce Microservices Backend - CI/CD & Testing Report
+# E-Commerce Microservices Backend - Proyecto Completo
 
-## 📋 Tabla de Contenidos
-- [Introducción](#-introducción)
-- [Arquitectura del Sistema](#-arquitectura-del-sistema)
-- [Estrategia de CI/CD](#️-estrategia-de-cicd)
-- [Configuración de Pipelines](#️-configuración-de-pipelines)
-- [Resultados de Ejecución](#-resultados-de-ejecución)
-- [Análisis de Tests](#-análisis-de-tests)
-- [Despliegue en Minikube](#-despliegue-en-minikube)
-- [Monitoreo y Observabilidad](#-monitoreo-y-observabilidad)
-- [Conclusiones](#-conclusiones)
+[![Tests](https://img.shields.io/badge/tests-101%20passing-brightgreen)](docs/03-TESTING-STRATEGY.md)
+[![Coverage](https://img.shields.io/badge/coverage-78%25-yellow)](docs/03-TESTING-STRATEGY.md)
+[![Microservices](https://img.shields.io/badge/microservices-10-blue)](docs/01-MICROSERVICES-REFACTORING.md)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](docs/04-CICD-PIPELINES.md)
+[![Kubernetes](https://img.shields.io/badge/kubernetes-minikube-326CE5)](docs/02-KUBERNETES-DEPLOYMENT.md)
 
 ---
 
-## 📝 Introducción
+## 📋 Tabla de Contenidos
 
-Este documento presenta el reporte completo de implementación de **pipelines CI/CD** y **testing automatizado** para el sistema de E-Commerce basado en microservicios. El proyecto implementa las mejores prácticas de DevOps, testing y despliegue continuo utilizando GitHub Actions con self-hosted runner y Kubernetes (Minikube).
+- [Resumen Ejecutivo](#-resumen-ejecutivo)
+- [Documentación Técnica](#-documentación-técnica-completa)
+- [Contexto del Proyecto](#-contexto-del-proyecto)
+- [Arquitectura del Sistema](#-arquitectura-del-sistema)
+- [Quick Start](#-quick-start)
+- [Resultados y Métricas](#-resultados-y-métricas)
+- [Estado del Proyecto](#-estado-del-proyecto)
 
-### Objetivos del Proyecto
+---
 
-- ✅ Implementar **3 pipelines CI/CD** (desarrollo, staging, producción)
-- ✅ Automatizar **101 tests** (56 unitarios + 45 integración) + **5 tests E2E**
-- ✅ Configurar **GitHub Actions self-hosted runner** en Windows
-- ✅ Desplegar en **Kubernetes (Minikube)** con 6 microservicios
-- ✅ Validar **flujos completos de usuario** con pruebas end-to-end
+## 🎯 Resumen Ejecutivo
+
+Este proyecto implementa un **sistema completo de e-commerce basado en microservicios** con énfasis en refactorización, testing automatizado, despliegue en Kubernetes y CI/CD. El desarrollo involucró superar múltiples desafíos técnicos desde la refactorización inicial hasta el despliegue en producción.
+
+### Fases del Proyecto
+
+```
+1. Refactorización    →  2. Despliegue K8s  →  3. Testing      →  4. CI/CD
+   (5 días)               (3 días)              (3 días)          (2.5 días)
+   ✅ 10 servicios        ⚠️ 65% estable       ✅ 101 tests      ⚠️ 75% funcional
+```
+
+### Logros Principales
+
+| Área | Resultado | Estado |
+|------|-----------|--------|
+| **Refactorización** | 10 microservicios con Proxy Client | ✅ 100% |
+| **Testing** | 101 tests (56 unit + 45 integration) | ✅ 100% passing |
+| **Cobertura** | 78% promedio de cobertura de código | ✅ Excelente |
+| **Kubernetes** | 11/17 pods operacionales (65%) | ⚠️ Parcial |
+| **CI/CD** | 3 pipelines con GitHub Actions | ⚠️ 75% funcional |
+| **E2E Tests** | 5 flujos creados pero no funcionales | ❌ Problemas de red |
+| **Dockerización** | Imágenes optimizadas (-62.5% tamaño) | ✅ Completado |
+| **Documentación** | 18,000+ palabras en 5 documentos | ✅ Profesional |
+
+**Completitud total del proyecto: 81.5%** ✅
+
+---
+
+## 📚 Documentación Técnica Completa
+
+### 🔧 [1. Refactorización de Microservicios](docs/01-MICROSERVICES-REFACTORING.md)
+**El trabajo más complejo y demandante del proyecto**
+
+- Problemas de comunicación entre servicios resueltos
+- Implementación de Proxy Client (reducción 52% código duplicado)
+- Configuración de Eureka, Zipkin y Config Server
+- Estandarización de YML y Dockerfiles
+- Métricas: 2,500 líneas refactorizadas, imágenes 62.5% más pequeñas
+
+### ☸️ [2. Despliegue en Kubernetes](docs/02-KUBERNETES-DEPLOYMENT.md)
+**Múltiples problemas críticos: CrashLoopBackOff, ImagePullBackOff, Networking**
+
+- Troubleshooting de 17 pods en Minikube
+- Solución de problemas de recursos y health checks
+- Configuración de Service Discovery interno
+- Estado: 11/17 pods operacionales (65%)
+- 6 servicios con problemas intermitentes por dependencias externas
+
+### 🧪 [3. Estrategia de Testing](docs/03-TESTING-STRATEGY.md)
+**101 tests unitarios e integración funcionando al 100%**
+
+- 56 unit tests con Mockito y JUnit 5 (✅ 100% passing)
+- 45 integration tests con Spring Test (✅ 100% passing)
+- 5 E2E tests con REST Assured (❌ no funcionales por conectividad)
+- Cobertura promedio: 78% (82% User Service, 74% Favourite Service)
+- Problemas: E2E no pueden conectar a servicios en Minikube
+
+### 🚀 [4. CI/CD Pipelines](docs/04-CICD-PIPELINES.md)
+**3 pipelines simplificados a testing puro**
+
+- Dev: Unit tests con self-hosted runner (⚠️ 75% estable)
+- Stage: Integration tests con GitHub-hosted runner (✅ 100%)
+- Production: All tests (✅ 100%)
+- Funcionalidades removidas: Docker build, K8s deploy, versionado
+- Razón: Complejidad de configuración y problemas de conectividad
+
+### 📝 [5. Conclusiones y Lecciones](docs/05-CONCLUSIONS.md)
+**Análisis completo de logros, desafíos y aprendizajes**
+
+- 16 días de trabajo total distribuidos en 4 fases
+- ~47,500 líneas de código en 346 archivos
+- 10 lecciones técnicas + 8 lecciones de proceso
+- Recomendaciones para futuros proyectos
+- Plan de mejoras a corto, mediano y largo plazo
+
+---
+
+## 🎓 Contexto del Proyecto
+
+### Historia del Desarrollo
+
+Este proyecto comenzó con una **arquitectura de microservicios desorganizada** donde cada servicio tenía configuraciones inconsistentes, comunicación directa punto a punto, y múltiples problemas de diseño. El proceso de desarrollo siguió estas fases críticas:
+
+#### **Fase 1: Refactorización Masiva** (5 días - El más complejo) 🔥
+- **Problema inicial**: Servicios con comunicación acoplada, configuraciones hardcodeadas, código duplicado
+- **Solución**: Implementación completa de Proxy Client con Feign para centralizar comunicación HTTP
+- **Resultado**: 52% reducción de código duplicado, comunicación estandarizada
+- **Desafíos**: Dependencias circulares, versionado de APIs, configuración de Eureka
+
+#### **Fase 2: Configuración de YML y Dockerfiles** (2 días) 🛠️
+- **Problema**: Cada servicio con configuración diferente, URLs hardcodeadas, Dockerfiles inconsistentes
+- **Solución**: Parametrización completa con variables de entorno, templates estandarizados
+- **Resultado**: 100% parametrización, Dockerfiles optimizados con multi-stage builds
+- **Mejoras**: Imágenes 62.5% más pequeñas (480MB → 180MB), builds 40% más rápidos
+
+#### **Fase 3: Despliegue en Minikube** (3 días - Muchos errores) 💥
+- **Problema**: Pods en CrashLoopBackOff, ImagePullBackOff, problemas de networking
+- **Causas**: 
+  - Dependencias de BD no disponibles
+  - Resource limits insuficientes para JVMs
+  - Health checks demasiado agresivos
+  - Imágenes no disponibles en daemon interno de Minikube
+- **Solución**: 
+  - Build dentro de Minikube: `minikube docker-env`
+  - Ajuste de recursos: 512Mi → 1Gi memoria, 200m → 500m CPU
+  - Health checks generosos: 60s initialDelaySeconds
+- **Estado final**: 11/17 pods operacionales (65%), 6 con problemas intermitentes
+
+#### **Fase 4: Testing Completo** (3 días) ✅
+- **Unit Tests**: 56 tests implementados con Mockito, todos pasando
+- **Integration Tests**: 45 tests con Spring Test y H2, todos pasando  
+- **E2E Tests**: 5 flujos con REST Assured creados pero NO funcionales
+- **Problema E2E**: No se puede conectar a API Gateway en Minikube desde host
+- **Cobertura**: 78% promedio, excelente para microservicios
+
+#### **Fase 5: Pipelines CI/CD** (2.5 días - Simplificados) 📦
+- **Intento inicial**: Build Docker + Push + Deploy K8s + Health checks
+- **Problemas encontrados**:
+  - Autenticación con Docker registry fallaba
+  - No se podía conectar a Minikube desde GitHub Actions
+  - Self-hosted runner con desconexiones intermitentes
+  - Timeouts y errores aleatorios
+- **Solución final**: Simplificar a **testing puro**
+  - Dev: Solo unit tests (self-hosted)
+  - Stage: Solo integration tests (GitHub-hosted)
+  - Production: Todos los tests (GitHub-hosted)
+- **Resultado**: ⚠️ 75% funcional, tests ejecutan bien pero sin despliegue automatizado
+
+---
+
+## 📝 Resumen de Desafíos y Soluciones
+
+### 🔴 Desafíos Críticos Superados
+
+1. **Comunicación entre microservicios acoplada**
+   - ✅ Resuelto con Proxy Client pattern y Feign
+   
+2. **Pods en CrashLoopBackOff (35% de pods)**
+   - ⚠️ Parcialmente resuelto: ajuste de recursos y health checks
+   - ❌ Algunos servicios aún inestables por dependencias de BD externa
+
+3. **Configuraciones inconsistentes en 10 servicios**
+   - ✅ Completamente estandarizado con variables de entorno
+
+4. **Dockerfiles pesados y lentos (480MB)**
+   - ✅ Optimizados a 180MB con multi-stage builds
+
+5. **Tests E2E no pueden conectar a servicios**
+   - ❌ No resuelto: problemas de port-forwarding en Minikube + Windows
+
+6. **Pipelines CI/CD con deploy automatizado**
+   - ⚠️ Simplificados: solo testing, sin Docker/K8s automation
+
+### ⏱️ Tiempo Invertido
+
+- **Refactorización**: 5 días (31%) - **Lo más complejo**
+- **Troubleshooting K8s**: 3 días (19%)
+- **Testing**: 3 días (19%)
+- **CI/CD**: 2.5 días (16%)
+- **Dockerización**: 2 días (12%)
+- **Documentación**: 0.5 días (3%)
+- **Total**: **16 días**
+
+---
+
+## 📝 Introducción al Sistema
 
 ### Tecnologías Utilizadas
 
