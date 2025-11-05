@@ -303,59 +303,29 @@ jobs:
           # Generate changelog
           $changelog = git log "$lastTag..HEAD" --pretty=format:"- %s (%an)" --no-merges
           
-          # Create release notes
-          $releaseNotes = @"
-# Release Notes - $version
-**Release Date:** $date
-**Environment:** Production (Kubernetes)
-
-## 📋 Summary
-This release includes the deployment of 6 microservices with full test coverage:
-- User Service
-- Product Service  
-- Order Service
-- Payment Service
-- Shipping Service
-- Favourite Service
-
-## ✨ Changes
-$changelog
-
-## 🧪 Test Results
-- ✅ Unit Tests: Passed (58 tests)
-- ✅ Integration Tests: Passed (47 tests)
-- ✅ E2E Tests: Executed
-- ✅ Performance Tests: Completed
-
-## 🚀 Deployment
-- **Platform:** Kubernetes (Minikube)
-- **Environment:** Production
-- **Docker Images:** Tagged with $version
-- **Services:** 6 microservices deployed
-- **Infrastructure:** Eureka, Zipkin, API Gateway, Cloud Config
-
-## 📊 Metrics
-- Response Time: < 200ms (p95)
-- Throughput: 1000+ req/s
-- Error Rate: < 0.1%
-- Uptime: 99.9%
-
-## 🔧 Configuration Changes
-- Updated deployment configurations
-- Enhanced resource limits
-- Improved health probes
-
-## 📚 Documentation
-- Updated API documentation
-- Added troubleshooting guides
-- Enhanced deployment procedures
-
----
-**Generated automatically by GitHub Actions**
-"@
+          # Create release notes content
+          $content = "# Release Notes - $version`n"
+          $content += "**Release Date:** $date`n"
+          $content += "**Environment:** Production (Kubernetes)`n`n"
+          $content += "## Summary`n"
+          $content += "Deployment of 6 microservices with full test coverage`n`n"
+          $content += "## Changes`n"
+          $content += "$changelog`n`n"
+          $content += "## Test Results`n"
+          $content += "- Unit Tests: Passed (58 tests)`n"
+          $content += "- Integration Tests: Passed (47 tests)`n"
+          $content += "- E2E Tests: Executed`n"
+          $content += "- Performance Tests: Completed`n`n"
+          $content += "## Deployment`n"
+          $content += "- Platform: Kubernetes (Minikube)`n"
+          $content += "- Environment: Production`n"
+          $content += "- Docker Images: Tagged with $version`n"
+          $content += "- Services: 6 microservices deployed`n`n"
+          $content += "---`n"
+          $content += "Generated automatically by GitHub Actions`n"
           
           # Save to file
-          $releaseNotes | Out-File -FilePath "RELEASE_NOTES_$version.md" -Encoding UTF8
+          $content | Out-File -FilePath "RELEASE_NOTES_$version.md" -Encoding UTF8
           
           Write-Host "✅ Release Notes generated: RELEASE_NOTES_$version.md" -ForegroundColor Green
           Write-Host ""
