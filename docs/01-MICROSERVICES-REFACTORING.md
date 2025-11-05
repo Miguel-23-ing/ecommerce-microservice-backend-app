@@ -45,7 +45,6 @@ public interface UserServiceProxy {
 ```
 
 **Impacto:**
-- ✅ Reducción de ~40% de código duplicado
 - ✅ Manejo centralizado de errores
 - ✅ Mejor testing con mocks
 - ✅ Circuit breaker implementado

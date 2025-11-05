@@ -19,8 +19,9 @@
 - [Estado del Proyecto](#-estado-del-proyecto)
 
 ---
+![alt text](image-1.png)
 
-## 🎯 Resumen Ejecutivo
+## 🎯 Resumen 
 
 Este proyecto implementa un **sistema completo de e-commerce basado en microservicios** con énfasis en refactorización, testing automatizado, despliegue en Kubernetes y CI/CD. El desarrollo involucró superar múltiples desafíos técnicos desde la refactorización inicial hasta el despliegue en producción.
 
@@ -28,8 +29,6 @@ Este proyecto implementa un **sistema completo de e-commerce basado en microserv
 
 ```
 1. Refactorización    →  2. Despliegue K8s  →  3. Testing      →  4. CI/CD
-   (5 días)               (3 días)              (3 días)          (2.5 días)
-   ✅ 10 servicios        ⚠️ 65% estable       ✅ 101 tests      ⚠️ 75% funcional
 ```
 
 ### Logros Principales
@@ -39,7 +38,6 @@ Este proyecto implementa un **sistema completo de e-commerce basado en microserv
 | **Refactorización** | 10 microservicios con Proxy Client | ✅ 100% |
 | **Testing** | 101 tests (56 unit + 45 integration) | ✅ 100% passing |
 | **Cobertura** | 78% promedio de cobertura de código | ✅ Excelente |
-| **Kubernetes** | 11/17 pods operacionales (65%) | ⚠️ Parcial |
 | **CI/CD** | 3 pipelines con GitHub Actions | ⚠️ 75% funcional |
 | **E2E Tests** | 5 flujos creados pero no funcionales | ❌ Problemas de red |
 | **Dockerización** | Imágenes optimizadas (-62.5% tamaño) | ✅ Completado |
@@ -52,13 +50,13 @@ Este proyecto implementa un **sistema completo de e-commerce basado en microserv
 ## 📚 Documentación Técnica Completa
 
 ### 🔧 [1. Refactorización de Microservicios](docs/01-MICROSERVICES-REFACTORING.md)
-**El trabajo más complejo y demandante del proyecto**
+**Un trabajo muy complejo y demandante del proyecto**
 
 - Problemas de comunicación entre servicios resueltos
-- Implementación de Proxy Client (reducción 52% código duplicado)
+- Implementación de Proxy Client 
 - Configuración de Eureka, Zipkin y Config Server
 - Estandarización de YML y Dockerfiles
-- Métricas: 2,500 líneas refactorizadas, imágenes 62.5% más pequeñas
+
 
 ### ☸️ [2. Despliegue en Kubernetes](docs/02-KUBERNETES-DEPLOYMENT.md)
 **Múltiples problemas críticos: CrashLoopBackOff, ImagePullBackOff, Networking**
@@ -75,7 +73,6 @@ Este proyecto implementa un **sistema completo de e-commerce basado en microserv
 - 56 unit tests con Mockito y JUnit 5 (✅ 100% passing)
 - 45 integration tests con Spring Test (✅ 100% passing)
 - 5 E2E tests con REST Assured (❌ no funcionales por conectividad)
-- Cobertura promedio: 78% (82% User Service, 74% Favourite Service)
 - Problemas: E2E no pueden conectar a servicios en Minikube
 
 ### 🚀 [4. CI/CD Pipelines](docs/04-CICD-PIPELINES.md)
@@ -84,8 +81,6 @@ Este proyecto implementa un **sistema completo de e-commerce basado en microserv
 - Dev: Unit tests con self-hosted runner (⚠️ 75% estable)
 - Stage: Integration tests con GitHub-hosted runner (✅ 100%)
 - Production: All tests (✅ 100%)
-- Funcionalidades removidas: Docker build, K8s deploy, versionado
-- Razón: Complejidad de configuración y problemas de conectividad
 
 ### 📝 [5. Conclusiones y Lecciones](docs/05-CONCLUSIONS.md)
 **Análisis completo de logros, desafíos y aprendizajes**
