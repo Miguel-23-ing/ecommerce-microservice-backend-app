@@ -1,4 +1,4 @@
-name: 🎯 Production Deployment - Full Pipeline
+﻿name: 🎯 Production Deployment - Full Pipeline
 
 on:
   push:
@@ -383,4 +383,5 @@ jobs:
           Write-Host "🎉 Deployment pipeline executed successfully!" -ForegroundColor Green
           Write-Host "📝 Check artifacts for detailed reports and release notes" -ForegroundColor Yellow
         shell: powershell
+
 
