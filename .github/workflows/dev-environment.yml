@@ -44,7 +44,7 @@ jobs:
       - name: 🔨 Build ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
         run: ./mvnw.cmd clean compile -DskipTests
-        shell: pwsh
+        shell: powershell
       
       - name: 🧪 Run Unit Tests - ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
@@ -56,7 +56,7 @@ jobs:
             exit 1
           }
           Write-Host "✅ Tests exitosos para ${{ matrix.service }}" -ForegroundColor Green
-        shell: pwsh
+        shell: powershell
       
       - name: 📊 Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action/composite@v2
@@ -69,10 +69,10 @@ jobs:
       - name: 📦 Package ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
         run: ./mvnw.cmd package -DskipTests
-        shell: pwsh
+        shell: powershell
       
       - name: 📤 Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.service }}-jar
           path: ${{ matrix.service }}/target/*.jar
@@ -96,4 +96,5 @@ jobs:
           Write-Host "📦 Artifacts generados y almacenados" -ForegroundColor Green
           Write-Host ""
           Write-Host "🎯 Siguiente paso: Stage Environment (Integration Tests)" -ForegroundColor Yellow
-        shell: pwsh
+        shell: powershell
+

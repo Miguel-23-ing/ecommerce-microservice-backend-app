@@ -57,12 +57,12 @@ jobs:
           }
           
           Write-Host "✅ Unit tests passed for ${{ matrix.service }}" -ForegroundColor Green
-        shell: pwsh
+        shell: powershell
       
       - name: 📦 Package ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
         run: ./mvnw.cmd package -DskipTests
-        shell: pwsh
+        shell: powershell
       
       - name: 🐳 Build Docker Image
         working-directory: ./${{ matrix.service }}
@@ -76,10 +76,10 @@ jobs:
           Write-Host "✅ Images created:" -ForegroundColor Green
           Write-Host "   - ${{ matrix.service }}:$version" -ForegroundColor Cyan
           Write-Host "   - ${{ matrix.service }}:prod" -ForegroundColor Cyan
-        shell: pwsh
+        shell: powershell
       
       - name: 📤 Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.service }}-prod
           path: ${{ matrix.service }}/target/*.jar
@@ -120,11 +120,11 @@ jobs:
           } else {
             Write-Host "⚠️ Some integration tests failed" -ForegroundColor Yellow
           }
-        shell: pwsh
+        shell: powershell
         continue-on-error: true
       
       - name: 📊 Upload Test Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: integration-test-reports-${{ matrix.service }}
@@ -149,7 +149,7 @@ jobs:
             Write-Host "🚀 Starting Minikube..." -ForegroundColor Yellow
             minikube start --driver=docker --cpus=${{ env.MINIKUBE_CPUS }} --memory=${{ env.MINIKUBE_MEMORY }}
           }
-        shell: pwsh
+        shell: powershell
       
       - name: 📦 Load Images to Minikube
         run: |
@@ -162,7 +162,7 @@ jobs:
             Write-Host "📦 Loading $service`:$version..." -ForegroundColor Cyan
             minikube image load "$service`:$version"
           }
-        shell: pwsh
+        shell: powershell
       
       - name: 🚀 Deploy Infrastructure
         run: |
@@ -174,7 +174,7 @@ jobs:
           
           Write-Host "⏳ Waiting for infrastructure..." -ForegroundColor Yellow
           Start-Sleep -Seconds 60
-        shell: pwsh
+        shell: powershell
       
       - name: 🚀 Deploy Microservices
         run: |
@@ -185,7 +185,7 @@ jobs:
           kubectl apply -f k8s/shipping-service-deployment.yaml
           kubectl apply -f k8s/favourite-service-deployment.yaml
           kubectl apply -f k8s/proxy-client-deployment.yaml
-        shell: pwsh
+        shell: powershell
       
       - name: ⏳ Wait for Deployments
         run: |
@@ -199,7 +199,7 @@ jobs:
           }
           
           Write-Host "✅ All services are ready!" -ForegroundColor Green
-        shell: pwsh
+        shell: powershell
         continue-on-error: true
       
       - name: 🏥 Health Checks
@@ -214,7 +214,7 @@ jobs:
           Write-Host ""
           Write-Host "📊 Service Status:" -ForegroundColor Cyan
           kubectl get svc -n ecommerce-microservices
-        shell: pwsh
+        shell: powershell
 
   e2e-tests:
     name: 🎭 E2E Tests
@@ -248,7 +248,7 @@ jobs:
           # Cleanup
           Get-Job | Stop-Job
           Get-Job | Remove-Job
-        shell: pwsh
+        shell: powershell
 
   performance-tests:
     name: 📈 Performance Tests (Locust)
@@ -268,14 +268,14 @@ jobs:
         run: |
           pip install locust
           Write-Host "✅ Locust installed" -ForegroundColor Green
-        shell: pwsh
+        shell: powershell
       
       - name: 📈 Run Performance Tests
         run: |
           Write-Host "📈 Running performance tests with Locust..." -ForegroundColor Cyan
           Write-Host "Note: Create locustfile.py for actual performance tests" -ForegroundColor Yellow
           Write-Host "✅ Performance test configuration ready" -ForegroundColor Green
-        shell: pwsh
+        shell: powershell
 
   release-notes:
     name: 📝 Generate Release Notes
@@ -330,10 +330,10 @@ jobs:
           Write-Host "✅ Release Notes generated: RELEASE_NOTES_$version.md" -ForegroundColor Green
           Write-Host ""
           Write-Host $releaseNotes
-        shell: pwsh
+        shell: powershell
       
       - name: 📤 Upload Release Notes
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-notes
           path: RELEASE_NOTES_*.md
@@ -347,7 +347,7 @@ jobs:
           git tag -a $version -m "Release $version"
           git push origin $version
           Write-Host "✅ Tag $version created and pushed" -ForegroundColor Green
-        shell: pwsh
+        shell: powershell
         continue-on-error: true
 
   deployment-summary:
@@ -382,4 +382,5 @@ jobs:
           Write-Host ""
           Write-Host "🎉 Deployment pipeline executed successfully!" -ForegroundColor Green
           Write-Host "📝 Check artifacts for detailed reports and release notes" -ForegroundColor Yellow
-        shell: pwsh
+        shell: powershell
+

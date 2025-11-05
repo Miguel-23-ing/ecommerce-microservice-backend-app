@@ -41,12 +41,12 @@ jobs:
       - name: 🔨 Build ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
         run: ./mvnw.cmd clean compile -DskipTests
-        shell: pwsh
+        shell: powershell
       
       - name: 🧪 Run Unit Tests
         working-directory: ./${{ matrix.service }}
         run: ./mvnw.cmd test -Dtest="*Test" -DfailIfNoTests=false
-        shell: pwsh
+        shell: powershell
       
       - name: 🔗 Run Integration Tests
         working-directory: ./${{ matrix.service }}
@@ -58,7 +58,7 @@ jobs:
           } else {
             Write-Host "✅ Tests de integración exitosos" -ForegroundColor Green
           }
-        shell: pwsh
+        shell: powershell
         continue-on-error: true
       
       - name: 📊 Publish Test Results
@@ -73,17 +73,17 @@ jobs:
       - name: 📦 Package ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
         run: ./mvnw.cmd package -DskipTests
-        shell: pwsh
+        shell: powershell
       
       - name: 🐳 Build Docker Image
         working-directory: ./${{ matrix.service }}
         run: |
           docker build -t ${{ matrix.service }}:stage .
           Write-Host "✅ Imagen Docker creada: ${{ matrix.service }}:stage" -ForegroundColor Green
-        shell: pwsh
+        shell: powershell
       
       - name: 📤 Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.service }}-stage
           path: ${{ matrix.service }}/target/*.jar
@@ -107,7 +107,7 @@ jobs:
           } else {
             Write-Host "✅ Minikube ya está corriendo" -ForegroundColor Green
           }
-        shell: pwsh
+        shell: powershell
       
       - name: 📦 Load Docker Images to Minikube
         run: |
@@ -116,7 +116,7 @@ jobs:
             Write-Host "📦 Cargando $service`:stage a Minikube..." -ForegroundColor Cyan
             minikube image load "$service`:stage"
           }
-        shell: pwsh
+        shell: powershell
       
       - name: 🚀 Deploy to Kubernetes
         run: |
@@ -136,7 +136,7 @@ jobs:
           kubectl apply -f k8s/payment-service-deployment.yaml
           kubectl apply -f k8s/shipping-service-deployment.yaml
           kubectl apply -f k8s/favourite-service-deployment.yaml
-        shell: pwsh
+        shell: powershell
       
       - name: ⏳ Wait for Deployments
         run: |
@@ -144,7 +144,7 @@ jobs:
           kubectl wait --for=condition=ready pod -l app=user-service -n ecommerce-microservices --timeout=300s
           kubectl wait --for=condition=ready pod -l app=product-service -n ecommerce-microservices --timeout=300s
           kubectl wait --for=condition=ready pod -l app=order-service -n ecommerce-microservices --timeout=300s
-        shell: pwsh
+        shell: powershell
         continue-on-error: true
       
       - name: 🏥 Health Checks
@@ -156,7 +156,7 @@ jobs:
             $pods = kubectl get pods -n ecommerce-microservices -l app=$service -o jsonpath='{.items[*].status.phase}'
             Write-Host "📊 $service`: $pods" -ForegroundColor $(if ($pods -eq "Running") { "Green" } else { "Yellow" })
           }
-        shell: pwsh
+        shell: powershell
       
       - name: 📋 Deployment Summary
         run: |
@@ -170,4 +170,5 @@ jobs:
           Write-Host "🧪 Tests de integración ejecutados" -ForegroundColor Green
           Write-Host ""
           Write-Host "🎯 Listo para Production Deployment" -ForegroundColor Yellow
-        shell: pwsh
+        shell: powershell
+
