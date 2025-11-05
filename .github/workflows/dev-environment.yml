@@ -48,14 +48,7 @@ jobs:
       
       - name: Run Unit Tests - ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
-        run: |
-          Write-Host "Ejecutando tests unitarios para ${{ matrix.service }}..." -ForegroundColor Cyan
-          ./mvnw.cmd test -Dtest="*Test,*Tests" -DfailIfNoTests=false
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "Tests fallaron para ${{ matrix.service }}" -ForegroundColor Red
-            exit 1
-          }
-          Write-Host "Tests exitosos para ${{ matrix.service }}" -ForegroundColor Green
+        run: ./mvnw.cmd test -Dtest="*Test,*Tests" -DfailIfNoTests=false
         shell: powershell
       
       - name: Publish Test Results
@@ -87,15 +80,12 @@ jobs:
     steps:
       - name: Generate Build Summary
         run: |
-          Write-Host "============================================" -ForegroundColor Cyan
-          Write-Host "  DEV ENVIRONMENT BUILD COMPLETED" -ForegroundColor Cyan
-          Write-Host "============================================" -ForegroundColor Cyan
-          Write-Host ""
-          Write-Host "Microservicios construidos: 6" -ForegroundColor Green
-          Write-Host "Tests unitarios ejecutados" -ForegroundColor Green
-          Write-Host "Artifacts generados y almacenados" -ForegroundColor Green
-          Write-Host ""
-          Write-Host "Siguiente paso: Stage Environment (Integration Tests)" -ForegroundColor Yellow
+          echo "============================================"
+          echo "  DEV ENVIRONMENT BUILD COMPLETED"
+          echo "============================================"
+          echo "Microservicios construidos: 6"
+          echo "Tests unitarios ejecutados"
+          echo "Artifacts generados y almacenados"
         shell: powershell
 
 

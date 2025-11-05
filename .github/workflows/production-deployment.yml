@@ -45,18 +45,9 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: 🔨 Build & Unit Tests - ${{ matrix.service }}
+      - name: Build & Unit Tests - ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
-        run: |
-          Write-Host "🔨 Building ${{ matrix.service }}..." -ForegroundColor Cyan
-          ./mvnw.cmd clean test -Dtest="*Test" -DfailIfNoTests=false
-          
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "❌ Build failed for ${{ matrix.service }}" -ForegroundColor Red
-            exit 1
-          }
-          
-          Write-Host "✅ Unit tests passed for ${{ matrix.service }}" -ForegroundColor Green
+        run: ./mvnw.cmd clean test -Dtest="*Test" -DfailIfNoTests=false
         shell: powershell
       
       - name: 📦 Package ${{ matrix.service }}
@@ -64,18 +55,13 @@ jobs:
         run: ./mvnw.cmd package -DskipTests
         shell: powershell
       
-      - name: 🐳 Build Docker Image
+      - name: Build Docker Image
         working-directory: ./${{ matrix.service }}
         run: |
           $version = "${{ github.event.inputs.release_version }}"
           if ([string]::IsNullOrEmpty($version)) { $version = "latest" }
-          
           docker build -t ${{ matrix.service }}:$version .
           docker tag ${{ matrix.service }}:$version ${{ matrix.service }}:prod
-          
-          Write-Host "✅ Images created:" -ForegroundColor Green
-          Write-Host "   - ${{ matrix.service }}:$version" -ForegroundColor Cyan
-          Write-Host "   - ${{ matrix.service }}:prod" -ForegroundColor Cyan
         shell: powershell
       
       - name: 📤 Upload Artifacts
