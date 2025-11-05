@@ -12,6 +12,9 @@ import com.selimhorri.app.domain.Credential;
 public interface CredentialRepository extends JpaRepository<Credential, Integer> {
 
 	Optional<Credential> findByUsername(final String username);
+	
+	@Query("SELECT c FROM Credential c JOIN FETCH c.user WHERE c.username = :username")
+	Optional<Credential> findByUsernameWithUser(final String username);
 
 	boolean existsByUsername(String username);
 

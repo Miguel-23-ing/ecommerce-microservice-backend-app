@@ -1,23 +1,6 @@
-# Etapa 1: Construcción (Build stage)
-# Usar imagen Maven 3.8.4 con OpenJDK 11 para compilar la aplicación
-FROM maven:3.8.4-openjdk-11-slim AS build
-WORKDIR /app
-
-# Copiar archivo de configuración de dependencias
-COPY pom.xml ./
-
-# Descargar todas las dependencias necesarias con anticipación (optimiza capas de Docker)
-RUN mvn dependency:go-offline -B
-
-# Copiar código fuente y compilar la aplicación (genera .jar en /app/target)
-COPY src ./src
-
-RUN mvn clean package -Dmaven.test.skip=true
-
-
-# Etapa 2: Ejecución (Runtime stage)
-# Usar imagen OpenJDK 11 JRE 
-FROM openjdk:11-jre-slim
+# Etapa de Ejecución (Runtime stage)
+# Usar imagen OpenJDK 11 JRE (JAR pre-compilado externamente con mvn clean package -DskipTests)
+FROM eclipse-temurin:11-jre-jammy
 
 # Instalar curl para el health check (verifica que el servidor esté listo)
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -54,9 +37,9 @@ WORKDIR /home/app
 USER appuser
 
 
-# Copiar archivo JAR compilado desde la etapa build (reduce tamaño final eliminando dependencias de compilación)
+# Copiar archivo JAR pre-compilado desde el directorio target del host
 # --chown: asegura que el archivo pertenezca al usuario appuser (no root)
-COPY --from=build --chown=appuser:appuser /app/target/favourite-service-v${PROJECT_VERSION}.jar favourite-service.jar
+COPY --chown=appuser:appuser target/favourite-service-v${PROJECT_VERSION}.jar favourite-service.jar
 
 # Exponer puerto en el contenedor (documentación; Docker debe usar -p para mapear)
 EXPOSE ${SERVER_PORT}

@@ -1,22 +1,7 @@
-# ========== ETAPA DE COMPILACIÓN ==========
-# Utiliza Maven 3.8.4 con OpenJDK 11 en versión slim para compilar el código fuente
-# Esta etapa compila el proyecto Maven y genera el JAR ejecutable
-FROM maven:3.8.4-openjdk-11-slim AS build
-WORKDIR /app
-
-# Copia el archivo pom.xml y descarga todas las dependencias previamente
-# Esto permite un mejor aprovechamiento del caché de Docker
-COPY pom.xml ./
-
-RUN mvn dependency:go-offline -B
-
-# Copia el código fuente y compila el proyecto, omitiendo tests para acelerar el build
-COPY src ./src
-RUN mvn clean package -DskipTests
-
 # ========== ETAPA DE RUNTIME ==========
 # Utiliza OpenJDK 11 JRE (sin compilador) para reducir el tamaño de la imagen
-FROM openjdk:11-jre-slim
+# NOTA: El JAR debe compilarse previamente con Maven desde la raíz del proyecto
+FROM eclipse-temurin:11-jre-jammy
 
 # Instala curl para el health check HTTP
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -54,9 +39,9 @@ WORKDIR /home/app
 USER appuser
 
 # ========== COPIA DEL JAR COMPILADO ==========
-# Copia el JAR generado desde la etapa de compilación (desde el contenedor anterior)
+# Copia el JAR ya compilado previamente con Maven desde la raíz del proyecto
 # --chown asegura que el archivo pertenece al usuario appuser
-COPY --from=build --chown=appuser:appuser /app/target/user-service-v${PROJECT_VERSION}.jar user-service.jar
+COPY --chown=appuser:appuser target/user-service-v${PROJECT_VERSION}.jar user-service.jar
 
 # ========== EXPOSICIÓN DE PUERTOS ==========
 # Expone el puerto 8700 donde escucha el servicio de usuarios

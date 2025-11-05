@@ -16,7 +16,7 @@ RUN mvn clean package -DskipTests
 
 # Etapa 2: Ejecución (Runtime stage)
 # Usar imagen OpenJDK 11 JRE (más pequeña, solo para ejecutar, no compilar)
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre-jammy
 
 # Instalar curl para el health check (verifica que el servidor esté listo)
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -54,7 +54,7 @@ USER appuser
 
 # Copiar archivo JAR compilado desde la etapa build (reduce tamaño final eliminando dependencias de compilación)
 # --chown: asegura que el archivo pertenezca al usuario appuser (no root)
-COPY --from=build --chown=appuser:appuser /app/target/product-service-v${PROJECT_VERSION}.jar product-service.jar
+COPY --chown=appuser:appuser target/product-service-v${PROJECT_VERSION}.jar product-service.jar
 
 # Exponer puerto en el contenedor (documentación; Docker debe usar -p para mapear)
 EXPOSE ${SERVER_PORT}

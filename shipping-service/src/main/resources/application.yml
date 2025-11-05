@@ -9,6 +9,8 @@ management:
         include: "*"
 
 spring:
+  application:
+    name: SHIPPING-SERVICE
   flyway:
     baseline-version: 0
     baseline-on-migrate: true

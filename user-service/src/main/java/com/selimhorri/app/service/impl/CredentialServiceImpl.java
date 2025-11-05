@@ -84,8 +84,9 @@ public class CredentialServiceImpl implements CredentialService {
 	 */
 	@Override
 	public CredentialDto findByUsername(final String username) {
-		log.info("Buscando credencial para usuario: {}", username);
-		return CredentialMappingHelper.map(this.credentialRepository.findByUsername(username)
+		log.info("Buscando credencial para usuario: {} con información de usuario", username);
+		// Usamos findByUsernameWithUser para cargar el User con JOIN FETCH y así tener los roles
+		return CredentialMappingHelper.map(this.credentialRepository.findByUsernameWithUser(username)
 				.orElseThrow(() -> new UserObjectNotFoundException(
 						String.format("Credencial para usuario: %s no encontrada", username))));
 	}

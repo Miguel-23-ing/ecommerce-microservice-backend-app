@@ -41,6 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.antMatchers("/", "index", "**/css/**", "**/js/**").permitAll()
 				.antMatchers("/api/authenticate/**").permitAll()
+				.antMatchers("/app/authenticate/**").permitAll()  // Endpoint de autenticación del proxy
 
 				// User Resource
 				.antMatchers(HttpMethod.POST, "/api/users").permitAll()
@@ -130,13 +131,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers(HttpMethod.DELETE, "/api/carts/*")
 				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				// Order resource
-				.antMatchers(HttpMethod.GET, "/api/orders").hasRole(RoleBasedAuthority.ROLE_ADMIN.getRole())
+			// Order resource
+			.antMatchers(HttpMethod.GET, "/api/orders")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				.antMatchers(HttpMethod.GET, "/api/orders/*")
-				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
-
-				.antMatchers(HttpMethod.POST, "/api/orders")
+			.antMatchers(HttpMethod.GET, "/api/orders/*")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())				.antMatchers(HttpMethod.POST, "/api/orders")
 				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
 				.antMatchers(HttpMethod.PATCH, "/api/orders/*/status")
@@ -148,39 +148,40 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers(HttpMethod.DELETE, "/api/orders/*")
 				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				// Favourite resource
-				.antMatchers(HttpMethod.GET, "/api/favourites").hasRole(RoleBasedAuthority.ROLE_ADMIN.getRole())
+			// Favourite resource
+			.antMatchers(HttpMethod.GET, "/api/favourites")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				.antMatchers(HttpMethod.GET, "/api/favourites/*/*")
-				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
+			.antMatchers(HttpMethod.GET, "/api/favourites/*/*")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				.antMatchers(HttpMethod.POST, "/api/favourites")
-				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
+			.antMatchers(HttpMethod.POST, "/api/favourites")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				.antMatchers(HttpMethod.DELETE, "/api/favourites/*/*")
-				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
+			.antMatchers(HttpMethod.DELETE, "/api/favourites/*/*")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				// Payment resource
-				.antMatchers(HttpMethod.GET, "/api/payments").hasRole(RoleBasedAuthority.ROLE_ADMIN.getRole())
+			// Payment resource
+			.antMatchers(HttpMethod.GET, "/api/payments")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				.antMatchers(HttpMethod.GET, "/api/payments/*")
-				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
+			.antMatchers(HttpMethod.GET, "/api/payments/*")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				.antMatchers(HttpMethod.POST, "/api/payments")
-				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
+			.antMatchers(HttpMethod.POST, "/api/payments")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				.antMatchers(HttpMethod.PUT, "/api/payments/*").hasRole(RoleBasedAuthority.ROLE_ADMIN.getRole())
+			.antMatchers(HttpMethod.PUT, "/api/payments/*").hasRole(RoleBasedAuthority.ROLE_ADMIN.getRole())
 
-				.antMatchers(HttpMethod.DELETE, "/api/payments/*")
-				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
+			.antMatchers(HttpMethod.DELETE, "/api/payments/*")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				// Shipping resource
-				.antMatchers(HttpMethod.GET, "/api/shippings").hasRole(RoleBasedAuthority.ROLE_ADMIN.getRole())
+			// Shipping resource
+			.antMatchers(HttpMethod.GET, "/api/shippings")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
-				.antMatchers(HttpMethod.GET, "/api/shippings/*")
-				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
-
-				.antMatchers(HttpMethod.POST, "/api/shippings")
+			.antMatchers(HttpMethod.GET, "/api/shippings/*")
+			.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())				.antMatchers(HttpMethod.POST, "/api/shippings")
 				.hasAnyRole(RoleBasedAuthority.ROLE_ADMIN.getRole(), RoleBasedAuthority.ROLE_USER.getRole())
 
 				.antMatchers(HttpMethod.DELETE, "/api/shippings/*")

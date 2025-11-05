@@ -15,7 +15,7 @@ RUN mvn clean package -DskipTests
 
 # ========== ETAPA DE RUNTIME ==========
 # Utiliza OpenJDK 11 JRE (sin compilador) para reducir el tamaño de la imagen
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre-jammy
 
 # Instala curl para el health check HTTP
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -55,7 +55,7 @@ USER appuser
 # ========== COPIA DEL JAR COMPILADO ==========
 # Copia el JAR generado desde la etapa de compilación (desde el contenedor anterior)
 # --chown asegura que el archivo pertenece al usuario appuser
-COPY --from=build --chown=appuser:appuser /app/target/payment-service-v${PROJECT_VERSION}.jar payment-service.jar
+COPY --chown=appuser:appuser target/payment-service-v${PROJECT_VERSION}.jar payment-service.jar
 
 # ========== EXPOSICIÓN DE PUERTOS ==========
 # Expone el puerto 8400 donde escucha el servicio

@@ -23,7 +23,7 @@ RUN mvn clean package -DskipTests
 # ========== ETAPA 2: RUNTIME CON OPENJDK JRE ==========
 # Usa solo JRE (no JDK) para reducir tamaño de imagen final (~60% menos que JDK)
 # La imagen slim omite herramientas innecesarias
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre-jammy
 
 # Instala curl para health checks HTTP
 # apt-get update y rm -rf limpian cachés para reducir tamaño de imagen
@@ -70,7 +70,7 @@ USER appuser
 # ========== COPIA DEL JAR COMPILADO ==========
 # Copia JAR desde etapa de build, establece propietario para usuario appuser
 # El JAR fue compilado como: order-service-v0.1.0.jar
-COPY --from=build --chown=appuser:appuser /app/target/order-service-v${PROJECT_VERSION}.jar order-service.jar
+COPY --chown=appuser:appuser target/order-service-v${PROJECT_VERSION}.jar order-service.jar
 
 # ========== EXPOSICIÓN DE PUERTO ==========
 # Expone puerto 8300 (configurable via ENV SERVER_PORT)
